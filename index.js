@@ -7,8 +7,7 @@
 
 var EventEmitter = require('events').EventEmitter,
      querystring = require('querystring'),
-      serializer = require('serializer'),
-         connect = require('connect');
+      serializer = require('serializer');
 
 function OAuth2Provider(crypt_key, sign_key) {
   this.serializer = serializer.createSecureSerializer(crypt_key, sign_key);
@@ -50,7 +49,7 @@ OAuth2Provider.prototype.login = function() {
       return res.end(e.message);
     }
 
-    self.emit('access_token', req, {
+    self.emit('access_token', req, res, {
       user_id: user_id,
       client_id: client_id,
       extra_data: extra_data,
@@ -183,4 +182,5 @@ OAuth2Provider.prototype.oauth = function() {
   };
 };
 
+exports = module.exports = OAuth2Provider;
 exports.OAuth2Provider = OAuth2Provider;
