@@ -117,9 +117,24 @@ OAuth2Provider.prototype.oauth = function() {
   var self = this;
 
   return function(req, res, next) {
-    var uri = ~req.url.indexOf('?') ? req.url.substr(0, req.url.indexOf('?')) : req.url;
 
-    if(req.method == 'GET' && self.options.authorize_uri == uri) {
+    var authorize_uri;
+    var access_token_uri;
+    var uri = req.baseUrl + req.path;
+
+    if (self.options.authorize_uri.match(/^\//)) {
+      authorize_uri = self.options.authorize_uri;
+    } else {
+      authorize_uri = req.baseUrl + '/' + self.options.authorize_uri;
+    }
+
+    if (self.options.access_token_uri.match(/^\//)) {
+      access_token_uri = self.options.access_token_uri;
+    } else {
+      access_token_uri = req.baseUrl + '/' + self.options.access_token_uri;
+    }
+
+    if(req.method == 'GET' && authorize_uri == uri) {
       var    client_id = req.query.client_id,
           redirect_uri = req.query.redirect_uri;
 
@@ -129,7 +144,7 @@ OAuth2Provider.prototype.oauth = function() {
       }
 
       // authorization form will be POSTed to same URL, so we'll have all params
-      var authorize_url = req.url;
+      var authorize_url = req.originalUrl;
 
       self.emit('enforce_login', req, res, authorize_url, function(user_id) {
         // store user_id in an HMAC-protected encrypted query param
@@ -139,7 +154,7 @@ OAuth2Provider.prototype.oauth = function() {
         self.emit('authorize_form', req, res, client_id, authorize_url);
       });
 
-    } else if(req.method == 'POST' && self.options.authorize_uri == uri) {
+    } else if(req.method == 'POST' && authorize_uri == uri) {
       var     client_id = (req.query.client_id || req.body.client_id),
            redirect_uri = (req.query.redirect_uri || req.body.redirect_uri),
           response_type = (req.query.response_type || req.body.response_type) || 'code',
@@ -205,7 +220,7 @@ OAuth2Provider.prototype.oauth = function() {
         res.end();
       }
 
-    } else if(req.method == 'POST' && self.options.access_token_uri == uri) {
+    } else if(req.method == 'POST' && access_token_uri == uri) {
       var     client_id = req.body.client_id,
           client_secret = req.body.client_secret,
            redirect_uri = req.body.redirect_uri,
